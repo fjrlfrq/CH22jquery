@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="./public/stylesh/style.css">
     <link rel="stylesheet" href="./public/fontawesome/css/all.css">
     <script src="./moment.min.js"></script>
+    <script src="./jquery-3.6.3.min.js"></script>
     <title>BREAD</title>
 </head>
 
@@ -158,31 +159,37 @@
     </div>
 
     <script>
-        document.getElementById("user-form").addEventListener("submit", function (event) {
-            event.preventDefault()
-            const id = document.getElementById('id').value
-            const string = document.getElementById('string').value
-            const integer = document.getElementById('integer').value
-            const float = document.getElementById('float').value
-            const daten = document.getElementById('daten').value
-            const boolean = document.getElementById('boolean').value
-            saveData(id, string, integer, float, daten, boolean)
 
-        });
+        $(document).ready(function () {
 
-        document.getElementById("search-form").addEventListener("submit", function (event) {
+            readData()
+
+            $("#user-form").submit(function (event) {
+                event.preventDefault()
+                const id = $('#id').value
+                const string = $('#string').val()
+                const integer = $('#integer').val()
+                const float = $('#float').val()
+                const daten = $('#daten').val()
+                const boolean = $('#boolean').val()
+                saveData(id, string, integer, float, daten, boolean)
+
+            });
+        })
+
+        $("#search-form").submit(function (event) {
             event.preventDefault()
             const page = 1
-            const strings = document.getElementById('strings').value
-            const stringc = document.getElementById('stringc').value
-            const integers = document.getElementById('integers').value
-            const integerc = document.getElementById('integerc').value
-            const floats = document.getElementById('floats').value
-            const floatc = document.getElementById('floatc').value
-            const datens = document.getElementById('datens').value
-            const datenc = document.getElementById('datenc').value
-            const booleans = document.getElementById('booleans').value
-            const booleanc = document.getElementById('booleanc').value
+            const strings = $('#strings').val()
+            const stringc = $('#stringc').val()
+            const integers = $('#integers').val()
+            const integerc = $('#integerc').val()
+            const floats = $('#floats').val()
+            const floatc = $('#floatc').val()
+            const datens = $('#datens').val()
+            const datenc = $('#datenc').val()
+            const booleans = $('#booleans').val()
+            const booleanc = $('#booleanc').val()
             params = {
                 ...params,
                 strings, stringc,
@@ -196,7 +203,7 @@
 
         });
 
-        document.getElementById("stringc").addEventListener("change", function () {
+        $("#stringc").change(function () {
             if (this.checked) {
                 console.log(this.value);
             } else {
@@ -220,13 +227,14 @@
 
         //read
         const readData = (params) => {
-            fetch(`http://localhost:3000/users/?${new URLSearchParams(params).toString()}`)
-                .then((response) => response.json())
-                .then(({ data, page, pages, offset, sortBy, sortMode }) => {
-                    params = { ...params, page, pages, offset, sortBy, sortMode }
-                    let html = ""
-                    data.forEach((item, index) => {
-                        html += `
+            $.ajax({
+                method: "GET",
+                url: `http://localhost:3000/users/?${new URLSearchParams(params).toString()}`
+            }).done(function ({ data, page, pages, offset, sortBy, sortMode }) {
+                params = { ...params, page, pages, offset, sortBy, sortMode }
+                let html = ""
+                data.forEach((item, index) => {
+                    html += `
                     <tr>
                         <td>${index + 1 + offset}</td>
                         <td>${item.string}</td>
@@ -239,14 +247,13 @@
                             <button type="button" class="btn btn-danger" onclick="removeData('${item._id}')"><i class="fa-solid fa-trash" onclick="removeData('${item._id}')"></i></button>
                         </td>
                     </tr>`
-                    });
-                    document.getElementById('users-body').innerHTML = html
-                    pagination(params);
-                    sorting(params)
-                })
-                .catch((error) => {
-                    console.error("Error:", error);
-                })
+                });
+                $('#users-body').html(html)
+                pagination(params);
+                sorting(params)
+            }).fail(function (err) {
+                alert("Error: " + err)
+            })
         }
 
         //pagination
@@ -339,63 +346,54 @@
                 url = `http://localhost:3000/users/${id}`
                 method = 'PUT'
             }
-            fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id, string, integer, float, daten, boolean }),
-            }).then((response) => response.json()).then((data) => {
-                document.getElementById('id').value = ''
-                document.getElementById('string').value = ''
-                document.getElementById('integer').value = ''
-                document.getElementById('float').value = ''
-                document.getElementById('daten').value = ''
-                document.getElementById('boolean').value = ''
+            $.ajax({
+                method,
+                url,
+                body: JSON.stringify({ id, string, integer, float, daten, boolean })
+            }).done(function (data) {
+                $('#id').val('')
+                $('#string').val('')
+                $('#integer').val('')
+                $('#float').val('')
+                $('#daten').val('')
+                $('#boolean').val('')
                 readData()
 
-            }).catch((error) => {
-                console.error('Error:', error);
-            });
+            }).fail(function (err) {
+                alert("Error: " + err)
+            })
         }
 
         //edit
         const editData = (id) => {
-            fetch(`http://localhost:3000/users/${id}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    document.getElementById('id').value = data._id
-                    document.getElementById('string').value = data.string
-                    document.getElementById('integer').value = data.integer
-                    document.getElementById('float').value = data.float
-                    document.getElementById('daten').value = moment(data.daten).format("YYYY-MM-DD")
-                    document.getElementById('boolean').value = data.boolean
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
+            $.ajax({
+                method: "GET",
+                url: `http://localhost:3000/users/${id}`
+            }).done(function (data) {
+                $('#id').val(data._id)
+                $('#string').val(data.string)
+                $('#integer').val(data.integer)
+                $('#float').val(data.float)
+                $('#daten').val(moment(data.daten).format("YYYY-MM-DD"))
+                $('#boolean').val(data.boolean)
+            }).fail(function (err) {
+                alert("Error: " + err)
+            })
         }
 
         //hapus 
         const removeData = (id) => {
             if (confirm('anda yakin?')) {
-                fetch(`http://localhost:3000/users/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
+                $.ajax({
+                    method: "DELETE",
+                    url: `http://localhost:3000/users/${id}`
+                }).done(function (data) {
+                    readData()
+                }).fail(function (err) {
+                    alert("Error: " + err)
                 })
-                    .then((response) => response.json())
-                    .then((data) => {
-                        readData()
-                    })
-                    .catch((error) => {
-                        console.error('Error:', error);
-                    });
             }
         }
-
-        readData();
     </script>
 
 </body>

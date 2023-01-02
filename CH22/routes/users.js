@@ -35,6 +35,7 @@ module.exports = function (db) {
       const limit = 3
       const offset = (parseInt(page) - 1) * limit
 
+      //sorting
       const sortBy = req.query.sortBy || '_id'
       const sortMode = req.query.sortMode || 'asc'
 
